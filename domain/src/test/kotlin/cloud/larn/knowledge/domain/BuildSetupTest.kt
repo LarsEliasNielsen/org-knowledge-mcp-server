@@ -1,0 +1,12 @@
+package cloud.larn.knowledge.domain
+
+import io.kotest.matchers.shouldBe
+import kotlin.test.Test
+
+// Placeholder proving the test setup runs in this module. Remove once real tests exist.
+class BuildSetupTest {
+    @Test
+    fun `test setup runs`() {
+        "domain" shouldBe "domain"
+    }
+}
