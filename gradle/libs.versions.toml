@@ -13,6 +13,7 @@ kotest = "6.2.7"
 [libraries]
 # Build logic
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+ktor-gradle-plugin = { module = "io.ktor.plugin:plugin", version.ref = "ktor" }
 
 # Ktor (versions from the BOM)
 ktor-bom = { module = "io.ktor:ktor-bom", version.ref = "ktor" }
@@ -40,7 +41,3 @@ junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
-
-[plugins]
-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
