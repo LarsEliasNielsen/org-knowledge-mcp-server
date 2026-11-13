@@ -1,5 +1,7 @@
 package cloud.larn.knowledge.server
 
+import cloud.larn.knowledge.domain.KnowledgeBase
+import cloud.larn.knowledge.infrastructure.source.InMemoryKnowledgeRepository
 import cloud.larn.knowledge.server.config.ServerConfig
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
@@ -31,7 +33,9 @@ class McpEndpointTest {
         allowedHosts: List<String> = listOf("localhost"),
         block: suspend ApplicationTestBuilder.() -> Unit,
     ) = testApplication {
-        application { configureServer(ServerConfig(allowedHosts), buildInfo) }
+        application {
+            configureServer(ServerConfig(allowedHosts), buildInfo, InMemoryKnowledgeRepository(KnowledgeBase.EMPTY))
+        }
         block()
     }
 
@@ -76,7 +80,7 @@ class McpEndpointTest {
         val mcp = connect()
 
         val result = mcp.callTool("server_info", emptyMap())
-        result.content shouldBe listOf(TextContent("knowledge-mcp-server abc123"))
+        result.content shouldBe listOf(TextContent("knowledge-mcp-server abc123: 0 documents, 0 rules"))
         result.structuredContent?.get("version")?.jsonPrimitive?.content shouldBe "abc123"
         mcp.close()
     }

@@ -246,7 +246,12 @@ class MarkdownDocParser {
                 when (block.level) {
                     2 -> {
                         val heading = plainText(block)
-                        sections += Section(Slug.of(heading), heading, slice(startIndex(block), boundaryAfter(index, 2)))
+                        sections += Section(
+                            slug = Slug.of(heading),
+                            heading = heading,
+                            markdown = slice(startIndex(block), boundaryAfter(index, 2)),
+                            line = lineOf(block),
+                        )
                     }
                     3 -> RuleHeading.parse(plainText(block))?.let { ruleHeading ->
                         val ruleBlock = blocks.getOrNull(index + 1)?.takeIf(::isRuleBlock) as FencedCodeBlock?
@@ -298,6 +303,7 @@ class MarkdownDocParser {
                     status = status ?: RuleStatus.ACTIVE,
                     supersededBy = supersededBy,
                     overrides = overrides.filterNotNull(),
+                    line = lineOf(heading),
                 )
             } catch (e: IllegalArgumentException) {
                 errors.add(line, e.message!!)

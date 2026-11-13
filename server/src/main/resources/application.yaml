@@ -8,3 +8,7 @@ ktor:
 knowledge:
   # Comma-separated hostnames accepted in the Host header of /mcp requests (DNS-rebinding protection).
   allowedHosts: "$ALLOWED_HOSTS:localhost,127.0.0.1,[::1]"
+  # Optional: load knowledge from this directory instead of the copy bundled in the JAR (local editing).
+  dir: "$?KNOWLEDGE_DIR"
+  # Serve draft documents too. Keep false in production.
+  includeDrafts: "$INCLUDE_DRAFTS:false"

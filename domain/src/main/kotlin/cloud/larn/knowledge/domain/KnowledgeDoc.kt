@@ -25,8 +25,11 @@ data class KnowledgeDoc(
     fun section(slug: Slug): Section? = sections.firstOrNull { it.slug == slug }
 }
 
-/** An H2 section of a document, addressable by [slug]. [markdown] is the source text, heading included. */
-data class Section(val slug: Slug, val heading: String, val markdown: String)
+/**
+ * An H2 section of a document, addressable by [slug]. [markdown] is the source text, heading included.
+ * [line] is the 1-based line of the heading in the source file.
+ */
+data class Section(val slug: Slug, val heading: String, val markdown: String, val line: Int? = null)
 
 /** A rule: an H3 headed by its id. [body] is the source Markdown below the heading, rule block excluded. */
 data class Rule(
@@ -37,6 +40,8 @@ data class Rule(
     val supersededBy: RuleId? = null,
     /** Lower-layer rules this rule replaces for contexts where it applies. */
     val overrides: List<RuleId> = emptyList(),
+    /** 1-based line of the rule heading in the source file. */
+    val line: Int? = null,
 ) {
     init {
         require(title.isNotBlank()) { "Rule $id has a blank title" }

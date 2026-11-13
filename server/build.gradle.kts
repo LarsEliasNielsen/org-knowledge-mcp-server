@@ -45,6 +45,29 @@ val generateBuildInfo = tasks.register("generateBuildInfo") {
     }
 }
 
+// Bundles the repo's knowledge/ folder as classpath resources under knowledge/, plus knowledge/index.txt
+// listing every file, since classpath directories can't be listed inside a JAR.
+val bundleKnowledge = tasks.register("bundleKnowledge") {
+    val sourceDir = rootProject.layout.projectDirectory.dir("knowledge")
+    val outputDir = layout.buildDirectory.dir("generated/knowledge")
+    inputs.dir(sourceDir).withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(outputDir)
+    doLast {
+        val source = sourceDir.asFile
+        val target = outputDir.get().dir("knowledge").asFile
+        target.deleteRecursively()
+        val files = source.walkTopDown()
+            .onEnter { it == source || !it.name.startsWith(".") }
+            .filter { it.isFile && !it.name.startsWith(".") }
+            .map { it.relativeTo(source).invariantSeparatorsPath }
+            .sorted()
+            .toList()
+        files.forEach { source.resolve(it).copyTo(target.resolve(it)) }
+        target.resolve("index.txt").writeText(files.joinToString("\n", postfix = "\n"))
+    }
+}
+
 sourceSets.main {
     resources.srcDir(generateBuildInfo)
+    resources.srcDir(bundleKnowledge)
 }
