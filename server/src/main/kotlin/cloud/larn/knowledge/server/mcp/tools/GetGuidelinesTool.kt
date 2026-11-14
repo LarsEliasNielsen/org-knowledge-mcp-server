@@ -166,6 +166,7 @@ class GetGuidelinesTool(private val getGuidelines: GetGuidelines) {
                 is GuidelineWarning.DeprecatedRule -> {
                     put("type", "deprecated_rule")
                     warning.supersededBy?.let { put("supersededBy", it.value) }
+                    warning.successorInEffect?.let { put("successorInEffect", it.value) }
                 }
                 is GuidelineWarning.RuleNotInEffect -> {
                     put("type", "not_in_effect")
@@ -246,9 +247,7 @@ object GuidelinesMarkdown {
         val subject = "Override of ${warning.rule}"
         return when (warning) {
             is GuidelineWarning.UnknownRule -> "$subject: no such rule exists. Check the rule id in .knowledge.yaml."
-            is GuidelineWarning.DeprecatedRule -> warning.supersededBy
-                ?.let { "$subject: the rule is deprecated and superseded by $it. Point the override at $it or remove it." }
-                ?: "$subject: the rule is deprecated. Remove the override."
+            is GuidelineWarning.DeprecatedRule -> deprecationMessage(subject, warning)
             is GuidelineWarning.RuleNotInEffect -> when (val reason = warning.reason) {
                 NotInEffectReason.OutOfScope ->
                     "$subject: the rule does not apply to this project's team, languages or frameworks, so the override has no effect."
@@ -257,6 +256,18 @@ object GuidelinesMarkdown {
                 is NotInEffectReason.OverriddenBy ->
                     "$subject: ${reason.rule} already replaces this rule for the project. Override ${reason.rule} instead."
             }
+        }
+    }
+
+    private fun deprecationMessage(subject: String, warning: GuidelineWarning.DeprecatedRule): String {
+        val successor = warning.supersededBy ?: return "$subject: the rule is deprecated. Remove the override."
+        val target = warning.successorInEffect
+        return when (target) {
+            null -> "$subject: the rule is deprecated and superseded by $successor, which does not apply to this project. " +
+                "Remove the override."
+            successor -> "$subject: the rule is deprecated and superseded by $successor. Point the override at $successor or remove it."
+            else -> "$subject: the rule is deprecated and superseded by $successor; $target applies to this project in its place. " +
+                "Point the override at $target or remove it."
         }
     }
 

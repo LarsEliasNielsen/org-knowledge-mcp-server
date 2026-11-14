@@ -139,8 +139,16 @@ class GetGuidelinesToolTest {
 
             ## Warnings about the project's overrides
 
-            - Override of FX-JAVA-001: the rule is deprecated and superseded by FX-JAVA-002. Point the override at FX-JAVA-002 or remove it.
+            - Override of FX-JAVA-001: the rule is deprecated and superseded by FX-JAVA-002; FX-PAY-001 applies to this project in its place. Point the override at FX-PAY-001 or remove it.
         """.trimIndent()
+    }
+
+    @Test
+    fun `a deprecation warning names the declared successor when it applies directly`() {
+        val result = tool.call(json("""{"languages": ["java"], "overrides": [{"rule": "FX-JAVA-001", "action": "waive"}]}"""))
+
+        result.text.lines().last() shouldBe
+            "- Override of FX-JAVA-001: the rule is deprecated and superseded by FX-JAVA-002. Point the override at FX-JAVA-002 or remove it."
     }
 
     @Test
@@ -178,8 +186,8 @@ class GetGuidelinesToolTest {
         )["rules"]
         structured["warnings"] shouldBe json(
             """
-            {"warnings": [{"rule": "FX-JAVA-001", "type": "deprecated_rule", "supersededBy": "FX-JAVA-002",
-              "message": "Override of FX-JAVA-001: the rule is deprecated and superseded by FX-JAVA-002. Point the override at FX-JAVA-002 or remove it."}]}
+            {"warnings": [{"rule": "FX-JAVA-001", "type": "deprecated_rule", "supersededBy": "FX-JAVA-002", "successorInEffect": "FX-PAY-001",
+              "message": "Override of FX-JAVA-001: the rule is deprecated and superseded by FX-JAVA-002; FX-PAY-001 applies to this project in its place. Point the override at FX-PAY-001 or remove it."}]}
             """,
         )["warnings"]
     }

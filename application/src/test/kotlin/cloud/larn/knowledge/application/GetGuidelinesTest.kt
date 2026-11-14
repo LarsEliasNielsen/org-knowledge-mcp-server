@@ -227,11 +227,50 @@ class GetGuidelinesTest {
 
         resolve(context).warnings shouldContainExactly listOf(
             GuidelineWarning.UnknownRule(RuleId("XX-YY-001")),
-            GuidelineWarning.DeprecatedRule(RuleId("JAVA-A-002"), supersededBy = RuleId("JAVA-A-003")),
+            GuidelineWarning.DeprecatedRule(RuleId("JAVA-A-002"), RuleId("JAVA-A-003"), successorInEffect = RuleId("PAY-A-001")),
             GuidelineWarning.RuleNotInEffect(RuleId("KT-A-001"), NotInEffectReason.OutOfScope),
             GuidelineWarning.RuleNotInEffect(RuleId("JAVA-A-003"), NotInEffectReason.OverriddenBy(RuleId("PAY-A-001"))),
             GuidelineWarning.RuleNotInEffect(RuleId("PAY-D-001"), NotInEffectReason.DocumentNotServed(DocStatus.DRAFT)),
             GuidelineWarning.RuleNotInEffect(RuleId("ORG-OLD-001"), NotInEffectReason.DocumentNotServed(DocStatus.DEPRECATED)),
+        )
+    }
+
+    @Test
+    fun `a deprecation warning points at the successor that applies to the project`() {
+        fun warning(context: ProjectContext) =
+            resolve(context.copy(overrides = listOf(ProjectOverride(RuleId("JAVA-A-002"), OverrideAction.WAIVE)))).warnings.single()
+
+        // JAVA-A-002 is superseded by JAVA-A-003, which applies as is to a plain Java project...
+        warning(ProjectContext(languages = listOf("java"))) shouldBe
+            GuidelineWarning.DeprecatedRule(RuleId("JAVA-A-002"), RuleId("JAVA-A-003"), successorInEffect = RuleId("JAVA-A-003"))
+        // ...but PAY-A-001 replaces JAVA-A-003 for payments, so that is the rule to target.
+        warning(ProjectContext(team = "payments", languages = listOf("java"))) shouldBe
+            GuidelineWarning.DeprecatedRule(RuleId("JAVA-A-002"), RuleId("JAVA-A-003"), successorInEffect = RuleId("PAY-A-001"))
+    }
+
+    @Test
+    fun `successors are followed through further deprecations and stop where nothing applies`() {
+        val knowledge = listOf(
+            doc(
+                "org-a",
+                Layer.ORG,
+                rules = listOf(
+                    rule("ORG-A-001", status = RuleStatus.DEPRECATED, supersededBy = "ORG-A-002"),
+                    rule("ORG-A-002", status = RuleStatus.DEPRECATED, supersededBy = "ORG-A-003"),
+                    rule("ORG-A-003"),
+                    rule("ORG-A-004", status = RuleStatus.DEPRECATED, supersededBy = "KT-A-001"),
+                ),
+            ),
+            doc("kotlin-a", Layer.LANGUAGE, Scope(languages = setOf("kotlin")), rules = listOf(rule("KT-A-001"))),
+        )
+        val context = ProjectContext(
+            languages = listOf("java"),
+            overrides = listOf(ProjectOverride(RuleId("ORG-A-001"), OverrideAction.WAIVE), ProjectOverride(RuleId("ORG-A-004"), OverrideAction.WAIVE)),
+        )
+
+        resolve(context, knowledge).warnings shouldContainExactly listOf(
+            GuidelineWarning.DeprecatedRule(RuleId("ORG-A-001"), RuleId("ORG-A-002"), successorInEffect = RuleId("ORG-A-003")),
+            GuidelineWarning.DeprecatedRule(RuleId("ORG-A-004"), RuleId("KT-A-001"), successorInEffect = null),
         )
     }
 

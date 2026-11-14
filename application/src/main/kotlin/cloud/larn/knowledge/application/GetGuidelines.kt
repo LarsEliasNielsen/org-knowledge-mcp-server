@@ -42,8 +42,16 @@ sealed interface GuidelineWarning {
     /** No rule with this id exists. */
     data class UnknownRule(override val rule: RuleId) : GuidelineWarning
 
-    /** The rule is deprecated, so it is no longer in effect; [supersededBy] is the rule to target instead. */
-    data class DeprecatedRule(override val rule: RuleId, val supersededBy: RuleId?) : GuidelineWarning
+    /**
+     * The rule is deprecated, so it is no longer in effect. [supersededBy] is its declared successor;
+     * [successorInEffect] is the rule that actually applies to this project in its place, following further
+     * deprecations and higher-layer overrides (null when no successor applies). Target that rule instead.
+     */
+    data class DeprecatedRule(
+        override val rule: RuleId,
+        val supersededBy: RuleId?,
+        val successorInEffect: RuleId?,
+    ) : GuidelineWarning
 
     /** The rule exists but is not in effect for this context, so the override does nothing. */
     data class RuleNotInEffect(override val rule: RuleId, val reason: NotInEffectReason) : GuidelineWarning
@@ -105,7 +113,7 @@ class GetGuidelines(
 
         val warnings = context.overrides
             .filter { it.rule !in inEffectIds }
-            .map { warningFor(it.rule, knowledgeBase, context, replacedBy) }
+            .map { warningFor(it.rule, knowledgeBase, context, replacedBy, inEffectIds) }
 
         return Guidelines(rules, warnings)
     }
@@ -125,13 +133,37 @@ class GetGuidelines(
         knowledgeBase: KnowledgeBase,
         context: ProjectContext,
         replacedBy: Map<RuleId, RuleId>,
+        inEffectIds: Set<RuleId>,
     ): GuidelineWarning {
         val (rule, doc) = knowledgeBase.rule(id) ?: return GuidelineWarning.UnknownRule(id)
         return when {
-            !rule.isActive -> GuidelineWarning.DeprecatedRule(id, rule.supersededBy)
+            !rule.isActive -> GuidelineWarning.DeprecatedRule(
+                id,
+                rule.supersededBy,
+                rule.supersededBy?.let { successorInEffect(it, knowledgeBase, replacedBy, inEffectIds) },
+            )
             !isServed(doc) -> GuidelineWarning.RuleNotInEffect(id, NotInEffectReason.DocumentNotServed(doc.status))
             !doc.scope.matches(context) -> GuidelineWarning.RuleNotInEffect(id, NotInEffectReason.OutOfScope)
             else -> GuidelineWarning.RuleNotInEffect(id, NotInEffectReason.OverriddenBy(replacedBy.getValue(id)))
         }
+    }
+
+    /**
+     * Follows [start] to the rule in effect for the context: through higher-layer rules that replace it and
+     * through `superseded-by` of deprecated rules. Null when the chain ends at a rule that does not apply.
+     */
+    private fun successorInEffect(
+        start: RuleId,
+        knowledgeBase: KnowledgeBase,
+        replacedBy: Map<RuleId, RuleId>,
+        inEffectIds: Set<RuleId>,
+    ): RuleId? {
+        val visited = mutableSetOf<RuleId>()
+        var current: RuleId? = start
+        while (current != null && visited.add(current)) {
+            if (current in inEffectIds) return current
+            current = replacedBy[current] ?: knowledgeBase.rule(current)?.rule?.takeUnless { it.isActive }?.supersededBy
+        }
+        return null
     }
 }
