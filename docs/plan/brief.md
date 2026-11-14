@@ -33,7 +33,7 @@ Dependencies point inward only.
 |---|---|---|
 | `domain` | Entities and value objects (`KnowledgeDoc`, `Rule`, `RuleId`, `Scope`, `Layer`, `ProjectContext`, `Override`), pure policy (scope matching, precedence) | Kotlin stdlib only |
 | `application` | Use cases (`ListDocs`, `GetDoc`, `GetGuidelines`, `ValidateKnowledgeBase`, later `SearchDocs`), ports (`KnowledgeRepository`) | `domain` |
-| `infrastructure` | Adapters: commonmark + kaml parser, classpath/filesystem loader, in-memory repository | `application` |
+| `infrastructure` | Adapters: commonmark + kaml parser, `.knowledge.yaml` manifest parser (for tests and lint), classpath/filesystem loader, in-memory repository | `application` |
 | `server` | Ktor + MCP SDK: tool registration, mapping use-case results to MCP results, composition root in `Application.kt`, config | all of the above |
 
 A later `lint` CLI becomes a second delivery module next to `server`, reusing `application` and `infrastructure`.
@@ -46,7 +46,8 @@ A later `lint` CLI becomes a second delivery module next to `server`, reusing `a
 - `GET /mcp` is not a health check; a separate `/health` route exists.
 - Docs are copied into the fat JAR as classpath resources at build time. An optional `knowledgeDir` setting loads from
   the filesystem instead, for local editing. The index loads once at startup; no hot reload in v1.
-- Content version = git SHA, surfaced as `Implementation.version`.
+- Content version = git SHA, surfaced as `Implementation.version`. Builds from a working tree with local changes get a
+  `-dirty` suffix.
 - Config in Ktor `application.yaml` (port, `allowedHosts`, `includeDrafts`, `knowledgeDir`) with env-var overrides.
 
 ### Quality gates
@@ -142,7 +143,9 @@ scope widening beyond the folder default, duplicate section slugs, and any front
 
 ### Visibility
 
-- `draft` docs load and validate but are hidden from all tools, unless `includeDrafts` is on (local preview only).
+- `draft` docs load and validate but are not served, unless `includeDrafts` is on (local preview only): `list_docs`
+  leaves them out, `get_doc` returns a `draft_not_served` error, and `get_guidelines` leaves out their rules and says so
+  in its warnings.
 - Deprecated rules, and all rules of deprecated docs, are excluded from `get_guidelines`; `get_doc` still returns them
   with their status.
 
@@ -173,7 +176,10 @@ The server is remote and cannot read the developer's workspace, so context is pa
   - `extend`: the full rule is returned plus a marker `extendedBy: <doc>`; the agent appends the project text.
 - Agent: reads the manifest and project docs locally and applies them last.
 
-A project override that targets an unknown rule id, or a deprecated one, returns a warning (naming `superseded-by` when set).
+A project override that does not apply returns a warning: an unknown rule id, a rule not in effect for the context (out of
+scope, document not served, or replaced by a higher-layer rule, which the warning names), or a deprecated rule. For a
+deprecated rule the warning follows `superseded-by`, further deprecations and higher-layer overrides to the rule that
+applies to the project in its place, and names that rule.
 
 ## MCP surface (first version)
 
@@ -187,7 +193,9 @@ Tools (all `readOnlyHint = true`), each returning Markdown text content plus typ
 Rule order in `get_guidelines`: layer (org → language → team), then doc `id`, then position in the doc. Within the language layer,
 languages follow the order of the request's `languages` list.
 
-Server `instructions` state the precedence rule. `search_docs`, the `kb://docs/{id}` resource template, and prompts are backlog.
+Server `instructions`, sent to clients on initialize, state the precedence rule and the call flow: read `.knowledge.yaml`,
+call `get_guidelines` with it, follow project docs for extended or replaced rules, report warnings, use `list_docs` and
+`get_doc` for background. `search_docs`, the `kb://docs/{id}` resource template, and prompts are backlog.
 
 ## Repo layout
 
@@ -197,10 +205,13 @@ domain/                    # cloud.larn.knowledge.domain
 application/               # cloud.larn.knowledge.application
 infrastructure/            # cloud.larn.knowledge.infrastructure
 server/                    # cloud.larn.knowledge.server (Ktor app, Application.kt)
-examples/sample-project/   # .knowledge.yaml + docs/knowledge + CLAUDE.md snippet
+examples/sample-project/   # .knowledge.yaml + docs/knowledge + CLAUDE.md + .mcp.json, checked by SampleProjectTest
+build-logic/               # convention plugins: knowledge.kotlin-jvm, knowledge.kotlin-serialization, knowledge.ktor-server
 docs/plan/                 # this brief and TASKS.md
-gradle/libs.versions.toml
+README.md                  # overview, modules, setup, connecting Claude Code
+gradle/libs.versions.toml  # version catalog (kaml pinned to Ktor's version)
 settings.gradle.kts
+.gitattributes             # LF line endings, CRLF for .bat
 ```
 
 ## Open questions (deferred to backlog)

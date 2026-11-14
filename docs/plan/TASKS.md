@@ -3,9 +3,14 @@
 Each task is a vertical slice that ends green (`./gradlew build` passes) and runnable. Decisions and terminology come from
 [brief.md](brief.md). Tasks 1-9 are detailed; the backlog gets refined once task 9 is done.
 
+**Status:** first iteration complete. Tasks 1-9 are done, followed by a review round (deprecation warnings follow the
+successor that applies, consistent draft handling, `-dirty` build versions). The backlog is next.
+
 ---
 
 ## 1. Project setup
+
+**Status:** done
 
 **Goal:** an empty multi-module Gradle build that compiles and runs tests.
 
@@ -29,13 +34,15 @@ Each task is a vertical slice that ends green (`./gradlew build` passes) and run
 
 ## 2. Walking skeleton
 
+**Status:** done
+
 **Goal:** a deployable server with one MCP tool, proven by integration tests and MCP Inspector.
 
 **Scope**
 - `server`: Ktor + Netty, `application.yaml` with `port`, `allowedHosts`, env-var overrides.
 - `GET /health` returning 200 with the version.
 - Stateless `/mcp` via `mcpStatelessStreamableHttp`, `Implementation(name, version)`, one tool `server_info` (read-only)
-  returning name and version.
+  returning name and version. Task 5 adds the number of documents and rules.
 - Version = git SHA injected at build time (generated resource or JAR manifest), falling back to `dev`.
 - Fat JAR via the Ktor Gradle plugin.
 - Integration tests with `testApplication` + `kotlin-sdk-client`: `/health`, `tools/list`, `server_info` call.
@@ -50,6 +57,8 @@ Each task is a vertical slice that ends green (`./gradlew build` passes) and run
 ---
 
 ## 3. Domain model
+
+**Status:** done
 
 **Goal:** the knowledge model as pure Kotlin, with scope matching.
 
@@ -71,6 +80,8 @@ Each task is a vertical slice that ends green (`./gradlew build` passes) and run
 
 ## 4. Markdown parsing
 
+**Status:** done
+
 **Goal:** turn one Markdown file plus its path into a `KnowledgeDoc`, or a list of errors.
 
 **Scope**
@@ -90,6 +101,8 @@ Each task is a vertical slice that ends green (`./gradlew build` passes) and run
 ---
 
 ## 5. Loading, validation and seed content
+
+**Status:** done
 
 **Goal:** load a whole knowledge base, validate it, and gate the build on the real `knowledge/` folder.
 
@@ -115,6 +128,8 @@ Each task is a vertical slice that ends green (`./gradlew build` passes) and run
 
 ## 6. Layer resolver
 
+**Status:** done
+
 **Goal:** the `GetGuidelines` use case, fully specified by tests.
 
 **Scope**
@@ -136,6 +151,8 @@ Each task is a vertical slice that ends green (`./gradlew build` passes) and run
 
 ## 7. `list_docs` and `get_doc` tools
 
+**Status:** done
+
 **Goal:** the first knowledge tools, end to end.
 
 **Scope**
@@ -156,6 +173,8 @@ Each task is a vertical slice that ends green (`./gradlew build` passes) and run
 
 ## 8. `get_guidelines` tool
 
+**Status:** done
+
 **Goal:** expose the resolver over MCP.
 
 **Scope**
@@ -173,6 +192,8 @@ Each task is a vertical slice that ends green (`./gradlew build` passes) and run
 ---
 
 ## 9. Agent integration
+
+**Status:** done
 
 **Goal:** Claude Code uses the server from a real project directory.
 
