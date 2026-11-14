@@ -51,6 +51,7 @@ domain/           Gradle module: knowledge model and policy
 application/      Gradle module: use cases and ports
 infrastructure/   Gradle module: parsing and loading adapters
 server/           Gradle module: Ktor app and MCP tools
+examples/         A sample project repo wired to the server
 build-logic/      Shared Gradle convention plugins
 docs/plan/        Project brief and task plan
 ```
@@ -64,7 +65,7 @@ knowledge logic has no dependency on Ktor, MCP or file formats.
 |---|---|---|
 | `domain` | Entities and value objects: documents, rules, rule ids, scopes, layers, project contexts and overrides, and the `KnowledgeBase` aggregate. Pure policy such as scope matching and scope narrowing. | Kotlin stdlib only |
 | `application` | Use cases: `GetGuidelines` (the layer resolver), `ListDocs`, `GetDoc` and `ValidateKnowledgeBase` (all checks across documents). Defines the ports `KnowledgeSource` and `KnowledgeRepository`. | `domain` |
-| `infrastructure` | Adapters: the Markdown parser (commonmark-java plus kaml for front matter), filesystem and classpath knowledge sources, and the in-memory repository the server reads from. | `application` |
+| `infrastructure` | Adapters: the Markdown parser (commonmark-java plus kaml for front matter), the `.knowledge.yaml` manifest parser, filesystem and classpath knowledge sources, and the in-memory repository the server reads from. | `application` |
 | `server` | The Ktor application: configuration, startup loading and validation, `/health`, the MCP endpoint and tool definitions that map use-case results to MCP results. Composition root in `Application.kt`. Bundles `knowledge/` into the JAR. | all of the above |
 
 ## Getting started
@@ -137,6 +138,29 @@ npx @modelcontextprotocol/inspector --cli http://localhost:8080/mcp --transport 
   --method tools/call --tool-name get_guidelines \
   --tool-arg team=payments --tool-arg 'languages=["java"]'
 ```
+
+## Connecting Claude Code
+
+Register the server with Claude Code, in the project repo where you want to use it:
+
+```sh
+claude mcp add --transport http --scope project knowledge http://localhost:8080/mcp
+```
+
+`--scope project` writes a `.mcp.json` that the team can commit. Use `--scope user` to make the server available in
+every project instead. Then wire the project up:
+
+1. Add a `.knowledge.yaml` at the repo root with the project's team, languages, frameworks and overrides.
+2. Put project docs that extend or replace shared rules under `docs/knowledge/`.
+3. Add to `CLAUDE.md` (or `AGENTS.md`): read `.knowledge.yaml`, call `get_guidelines` with it, and give project docs
+   precedence over shared rules.
+
+The server also sends this call flow to clients as MCP instructions on connect.
+
+[examples/sample-project](examples/sample-project) has all of this ready. To try it, start the server, then run
+`claude` inside `examples/sample-project`, approve the `knowledge` server, and ask for something the guidelines cover,
+for example "Which rules apply to error handling in this project?". The build checks that the sample's manifest resolves
+against `knowledge/` without warnings.
 
 ## Working on knowledge
 

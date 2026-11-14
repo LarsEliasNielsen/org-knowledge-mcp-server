@@ -29,6 +29,7 @@ fun createMcpServer(buildInfo: BuildInfo, knowledge: KnowledgeRepository, tools:
         options = ServerOptions(
             capabilities = ServerCapabilities(tools = ServerCapabilities.Tools(listChanged = false)),
         ),
+        instructions = SERVER_INSTRUCTIONS,
     )
     server.addTool(ServerInfoTool.definition) { ServerInfoTool.call(buildInfo, knowledge.current()) }
     server.addTool(tools.listDocs.definition) { tools.listDocs.call(it.arguments) }

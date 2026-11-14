@@ -22,6 +22,15 @@ class DocToolsIntegrationTest {
     }
 
     @Test
+    fun `initialize sends the precedence rule and call flow as instructions`() = mcpTest { client ->
+        val instructions = client.serverInstructions!!
+
+        instructions shouldContain "org < language < team < project"
+        instructions shouldContain "Read `.knowledge.yaml`"
+        instructions shouldContain "call get_guidelines"
+    }
+
+    @Test
     fun `list_docs filters by kind`() = mcpTest { client ->
         val result = client.callTool("list_docs", mapOf("kind" to "adr"))
 

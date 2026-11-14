@@ -26,6 +26,13 @@ dependencies {
     testImplementation(libs.mcp.client)
 }
 
+// SampleProjectTest checks examples/sample-project against the bundled knowledge; rerun tests when it changes.
+tasks.test {
+    val sampleProject = rootProject.layout.projectDirectory.dir("examples/sample-project")
+    inputs.dir(sampleProject).withPathSensitivity(PathSensitivity.RELATIVE)
+    systemProperty("sampleProject", sampleProject.asFile.absolutePath)
+}
+
 // Content version = git SHA of the build, bundled as a classpath resource.
 // Falls back to "dev" outside a git checkout or before the first commit.
 val gitSha: Provider<String> = providers.exec {

@@ -1,0 +1,16 @@
+# Tells agents which shared knowledge applies to this project. Pass it to the knowledge server's get_guidelines tool.
+team: payments
+languages: [java]
+frameworks: [spring-boot]
+overrides:
+  - rule: JAVA-ERR-002
+    action: replace
+    doc: docs/knowledge/error-handling.md
+    reason: Legacy SOAP client forces checked-exception wrapping
+  - rule: JAVA-SPR-002
+    action: extend
+    doc: docs/knowledge/configuration.md
+    reason: Gateway credentials come from the payments vault
+  - rule: ORG-REV-001
+    action: waive
+    reason: Generated SOAP client code arrives in large pull requests
