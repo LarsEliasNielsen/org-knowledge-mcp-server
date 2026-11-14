@@ -33,12 +33,24 @@ tasks.test {
     systemProperty("sampleProject", sampleProject.asFile.absolutePath)
 }
 
-// Content version = git SHA of the build, bundled as a classpath resource.
-// Falls back to "dev" outside a git checkout or before the first commit.
-val gitSha: Provider<String> = providers.exec {
+// Content version = git SHA of the build, bundled as a classpath resource. A build with uncommitted or untracked
+// changes gets a "-dirty" suffix, since its content doesn't match the commit. Falls back to "dev" outside a git
+// checkout or before the first commit.
+val gitHead: Provider<String> = providers.exec {
     commandLine("git", "rev-parse", "--short=12", "HEAD")
     isIgnoreExitValue = true
-}.standardOutput.asText.map { it.trim().ifEmpty { "dev" } }.orElse("dev")
+}.standardOutput.asText.map { it.trim() }
+val gitDirty: Provider<Boolean> = providers.exec {
+    commandLine("git", "status", "--porcelain")
+    isIgnoreExitValue = true
+}.standardOutput.asText.map { it.isNotBlank() }
+val gitSha: Provider<String> = gitHead.zip(gitDirty) { head, dirty ->
+    when {
+        head.isEmpty() -> "dev"
+        dirty -> "$head-dirty"
+        else -> head
+    }
+}.orElse("dev")
 
 val generateBuildInfo = tasks.register("generateBuildInfo") {
     val version = gitSha
