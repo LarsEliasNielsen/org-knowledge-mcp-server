@@ -150,13 +150,22 @@ class DocToolsTest {
     }
 
     @Test
-    fun `unknown, malformed and hidden draft ids are unknown documents`() {
-        listOf("missing-doc", "Java Errors", "pay-draft").forEach { id ->
+    fun `unknown and malformed ids are unknown documents`() {
+        listOf("missing-doc", "Java Errors").forEach { id ->
             with(getDoc.call(args("id" to id))) {
                 isError shouldBe true
                 errorCode() shouldBe "unknown_doc"
                 text shouldBe "Unknown document '$id'. Use list_docs to see the available documents."
             }
+        }
+    }
+
+    @Test
+    fun `a hidden draft is reported as a draft, and served when drafts are visible`() {
+        with(getDoc.call(args("id" to "pay-draft"))) {
+            isError shouldBe true
+            errorCode() shouldBe "draft_not_served"
+            text shouldBe "Document 'pay-draft' is a draft and not served. Drafts are served only when the server runs with INCLUDE_DRAFTS=true."
         }
         GetDocTool(GetDoc(repository, Visibility(includeDrafts = true))).call(args("id" to "pay-draft")).isError shouldBe null
     }

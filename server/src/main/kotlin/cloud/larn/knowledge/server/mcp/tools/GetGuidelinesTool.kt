@@ -5,6 +5,7 @@ import cloud.larn.knowledge.application.GetGuidelines
 import cloud.larn.knowledge.application.GuidelineWarning
 import cloud.larn.knowledge.application.Guidelines
 import cloud.larn.knowledge.application.NotInEffectReason
+import cloud.larn.knowledge.domain.DocStatus
 import cloud.larn.knowledge.domain.Layer
 import cloud.larn.knowledge.domain.OverrideAction
 import cloud.larn.knowledge.domain.ProjectContext
@@ -251,8 +252,10 @@ object GuidelinesMarkdown {
             is GuidelineWarning.RuleNotInEffect -> when (val reason = warning.reason) {
                 NotInEffectReason.OutOfScope ->
                     "$subject: the rule does not apply to this project's team, languages or frameworks, so the override has no effect."
-                is NotInEffectReason.DocumentNotServed ->
-                    "$subject: the rule's document is ${lowercaseName(reason.status)}, so the rule is not in effect."
+                is NotInEffectReason.DocumentNotServed -> when (reason.status) {
+                    DocStatus.DRAFT -> "$subject: the rule's document is a draft and not served, so the rule is not in effect."
+                    else -> "$subject: the rule's document is ${lowercaseName(reason.status)}, so the rule is not in effect."
+                }
                 is NotInEffectReason.OverriddenBy ->
                     "$subject: ${reason.rule} already replaces this rule for the project. Override ${reason.rule} instead."
             }

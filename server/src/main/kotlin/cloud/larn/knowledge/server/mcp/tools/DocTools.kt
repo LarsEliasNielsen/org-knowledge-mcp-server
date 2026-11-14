@@ -92,6 +92,11 @@ class GetDocTool(private val getDoc: GetDoc) {
                 docJson(result.doc, section = result.section.slug.value, markdown = result.section.markdown),
             )
             is GetDocResult.UnknownDoc -> unknownDoc(rawId)
+            is GetDocResult.DraftNotServed -> toolError(
+                "draft_not_served",
+                "Document '${result.id}' is a draft and not served. Drafts are served only when the server runs with " +
+                    "INCLUDE_DRAFTS=true.",
+            ) { put("id", result.id.value) }
             is GetDocResult.UnknownSection -> {
                 val slugs = result.available.map { it.slug.value }
                 val listing = if (slugs.isEmpty()) "It has no H2 sections." else "Available sections: ${slugs.joinToString()}."

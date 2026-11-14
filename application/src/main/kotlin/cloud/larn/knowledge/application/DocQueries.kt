@@ -24,8 +24,11 @@ sealed interface GetDocResult {
 
     data class FoundSection(val doc: KnowledgeDoc, val section: Section) : GetDocResult
 
-    /** No visible document has this id (hidden drafts count as unknown). */
+    /** No document has this id. */
     data class UnknownDoc(val id: DocId) : GetDocResult
+
+    /** The document is a draft and drafts are not served, the same reason get_guidelines gives for its rules. */
+    data class DraftNotServed(val id: DocId) : GetDocResult
 
     /** The document exists but has no H2 section matching the request; [available] lists its sections. */
     data class UnknownSection(val doc: KnowledgeDoc, val requested: String, val available: List<Section>) : GetDocResult
@@ -41,7 +44,8 @@ class GetDoc(
      * which is turned into its slug.
      */
     operator fun invoke(id: DocId, section: String? = null): GetDocResult {
-        val doc = repository.current().doc(id)?.takeIf { visibility.isVisible(it) } ?: return GetDocResult.UnknownDoc(id)
+        val doc = repository.current().doc(id) ?: return GetDocResult.UnknownDoc(id)
+        if (!visibility.isVisible(doc)) return GetDocResult.DraftNotServed(id)
         if (section == null) return GetDocResult.Found(doc)
 
         val match = doc.section(Slug(section.trim())) ?: doc.section(Slug.of(section))

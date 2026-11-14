@@ -66,9 +66,9 @@ class DocQueriesTest {
     }
 
     @Test
-    fun `unknown and hidden draft docs are unknown`() {
+    fun `reports unknown docs, and hidden drafts as drafts`() {
         GetDoc(repository)(DocId("missing")) shouldBe GetDocResult.UnknownDoc(DocId("missing"))
-        GetDoc(repository)(DocId("team-draft")) shouldBe GetDocResult.UnknownDoc(DocId("team-draft"))
+        GetDoc(repository)(DocId("team-draft")) shouldBe GetDocResult.DraftNotServed(DocId("team-draft"))
         GetDoc(repository, Visibility(includeDrafts = true))(DocId("team-draft")) shouldBe GetDocResult.Found(docs[4])
     }
 

@@ -211,7 +211,7 @@ class GetGuidelinesToolTest {
             - Override of FX-NOPE-001: no such rule exists. Check the rule id in .knowledge.yaml.
             - Override of FX-KT-001: the rule does not apply to this project's team, languages or frameworks, so the override has no effect.
             - Override of FX-JAVA-002: FX-PAY-001 already replaces this rule for the project. Override FX-PAY-001 instead.
-            - Override of FX-PAYD-001: the rule's document is draft, so the rule is not in effect.
+            - Override of FX-PAYD-001: the rule's document is a draft and not served, so the rule is not in effect.
         """.trimIndent()
         result.structuredContent!!["warnings"] shouldBe json(
             """
@@ -219,7 +219,7 @@ class GetGuidelinesToolTest {
                   {"rule": "FX-NOPE-001", "type": "unknown_rule", "message": "Override of FX-NOPE-001: no such rule exists. Check the rule id in .knowledge.yaml."},
                   {"rule": "FX-KT-001", "type": "not_in_effect", "reason": "out_of_scope", "message": "Override of FX-KT-001: the rule does not apply to this project's team, languages or frameworks, so the override has no effect."},
                   {"rule": "FX-JAVA-002", "type": "not_in_effect", "reason": "overridden_by", "overriddenBy": "FX-PAY-001", "message": "Override of FX-JAVA-002: FX-PAY-001 already replaces this rule for the project. Override FX-PAY-001 instead."},
-                  {"rule": "FX-PAYD-001", "type": "not_in_effect", "reason": "document_not_served", "documentStatus": "draft", "message": "Override of FX-PAYD-001: the rule's document is draft, so the rule is not in effect."}
+                  {"rule": "FX-PAYD-001", "type": "not_in_effect", "reason": "document_not_served", "documentStatus": "draft", "message": "Override of FX-PAYD-001: the rule's document is a draft and not served, so the rule is not in effect."}
                 ]}
             """,
         )["w"]

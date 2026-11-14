@@ -74,7 +74,8 @@ class DocToolsIntegrationTest {
     @Test
     fun `drafts are hidden by default and served when configured`() {
         mcpTest { client ->
-            client.callTool("get_doc", mapOf("id" to "pay-draft")).isError shouldBe true
+            client.callTool("get_doc", mapOf("id" to "pay-draft")).structuredContent!!["error"]!!.jsonPrimitive.content shouldBe
+                "draft_not_served"
         }
         mcpTest(includeDrafts = true) { client ->
             client.callTool("get_doc", mapOf("id" to "pay-draft")).isError shouldBe null
