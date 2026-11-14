@@ -17,7 +17,7 @@ class DocToolsIntegrationTest {
     fun `lists all tools as read-only`() = mcpTest { client ->
         val tools = client.listTools().tools
 
-        tools.map { it.name } shouldContainExactly listOf("server_info", "list_docs", "get_doc")
+        tools.map { it.name } shouldContainExactly listOf("server_info", "list_docs", "get_doc", "get_guidelines")
         tools.all { it.annotations?.readOnlyHint == true } shouldBe true
     }
 
