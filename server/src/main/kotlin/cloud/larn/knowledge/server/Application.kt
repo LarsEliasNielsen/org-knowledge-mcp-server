@@ -1,10 +1,12 @@
 package cloud.larn.knowledge.server
 
 import cloud.larn.knowledge.application.KnowledgeRepository
+import cloud.larn.knowledge.application.Visibility
 import cloud.larn.knowledge.infrastructure.source.InMemoryKnowledgeRepository
 import cloud.larn.knowledge.server.config.ServerConfig
 import cloud.larn.knowledge.server.config.toServerConfig
 import cloud.larn.knowledge.server.http.healthRoute
+import cloud.larn.knowledge.server.mcp.KnowledgeTools
 import cloud.larn.knowledge.server.mcp.createMcpServer
 import io.ktor.server.application.Application
 import io.ktor.server.application.log
@@ -20,10 +22,11 @@ fun Application.module() {
 
 /** Composition root. Tests call this directly with an explicit config and knowledge base. */
 fun Application.configureServer(config: ServerConfig, buildInfo: BuildInfo, knowledge: KnowledgeRepository) {
+    val tools = KnowledgeTools(knowledge, Visibility(includeDrafts = config.includeDrafts))
     routing {
         healthRoute(buildInfo)
     }
     mcpStatelessStreamableHttp(path = "/mcp", allowedHosts = config.allowedHosts) {
-        createMcpServer(buildInfo, knowledge)
+        createMcpServer(buildInfo, knowledge, tools)
     }
 }

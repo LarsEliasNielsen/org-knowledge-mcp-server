@@ -69,9 +69,8 @@ class McpEndpointTest {
     fun `lists the server_info tool as read-only`() = serverTest {
         val mcp = connect()
 
-        val tools = mcp.listTools().tools
-        tools.map { it.name } shouldContainExactly listOf("server_info")
-        tools.single().annotations?.readOnlyHint shouldBe true
+        val serverInfo = mcp.listTools().tools.single { it.name == "server_info" }
+        serverInfo.annotations?.readOnlyHint shouldBe true
         mcp.close()
     }
 
