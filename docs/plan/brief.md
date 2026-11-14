@@ -127,6 +127,11 @@ overrides: [JAVA-ERR-003]
 `overrides` lives at rule level. A rule may override only rules in a lower layer; for contexts where the overriding rule
 applies, `get_guidelines` returns it marked `overrides JAVA-ERR-003` and drops the original.
 
+Rules are the unit `get_guidelines` serves, whatever the document `kind`. A binding constraint in an architecture doc or ADR
+is written as a rule (`### ARCH-STATE-001 Keep no session state in service memory`) and served like a coding guideline;
+the surrounding context and rationale stay prose, reachable through `get_doc`. `kind` drives `list_docs` filtering and tells
+the agent what kind of source a rule comes from. A superseded ADR gets `status: deprecated`, which removes its rules.
+
 H2 sections are addressed by GitHub-style slugs (`## Logging and context` → `logging-and-context`). Duplicate slugs within a doc
 fail validation.
 
@@ -138,7 +143,8 @@ scope widening beyond the folder default, duplicate section slugs, and any front
 ### Visibility
 
 - `draft` docs load and validate but are hidden from all tools, unless `includeDrafts` is on (local preview only).
-- Deprecated rules are excluded from `get_guidelines`; `get_doc` still returns them with their status.
+- Deprecated rules, and all rules of deprecated docs, are excluded from `get_guidelines`; `get_doc` still returns them
+  with their status.
 
 ### Project side (lives in each project repo, read locally by the agent)
 

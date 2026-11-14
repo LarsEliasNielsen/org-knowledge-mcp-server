@@ -19,6 +19,10 @@ Services run as several instances behind a load balancer and are replaced on eve
 Services keep no per-user or per-session state in memory. State lives in a database or cache that all
 instances share.
 
+### ARCH-STATE-001 Keep no session state in service memory
+Per-user and per-session state goes to a store all instances share (database or distributed cache). Code that
+needs the same instance to handle a follow-up request is a bug.
+
 ## Consequences
 
 Any instance can serve any request, so we need no sticky sessions and can scale and deploy freely.

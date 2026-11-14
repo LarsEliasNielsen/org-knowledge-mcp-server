@@ -45,6 +45,11 @@ superseded-by: JAVA-ERR-003
 
 A rule in a higher layer can replace lower-layer rules with `overrides: [JAVA-ERR-003]`.
 
+Rules are what `get_guidelines` serves, whatever the document kind. Write every binding constraint as a rule,
+including those in architecture docs and ADRs (`### ARCH-STATE-001 Keep no session state in service memory`).
+Context, rationale and other prose stay in the document; agents read it with `get_doc`. When an ADR is
+superseded, set its `status: deprecated` so its rules stop applying.
+
 ## Checking your changes
 
 Run `./gradlew build`. The build fails and lists every problem if the knowledge base is invalid.

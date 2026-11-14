@@ -120,7 +120,7 @@ Each task is a vertical slice that ends green (`./gradlew build` passes) and run
 **Scope**
 - `application`: input = `ProjectContext` (team, languages, frameworks, overrides); output = ordered effective rules (layer,
   source doc, rule, markers) plus warnings.
-- Steps: select active guideline docs whose scope matches the context (drafts per `includeDrafts`), collect rules, drop
+- Steps: select active docs of any kind whose scope matches the context (drafts per `includeDrafts`), collect rules, drop
   deprecated rules, apply team-layer `overrides`, apply project overrides (`waive`, `replace` stub, `extend` marker),
   order per the brief.
 - Warnings for project overrides that target unknown or deprecated rules (naming `superseded-by`).
@@ -202,5 +202,6 @@ Each task is a vertical slice that ends green (`./gradlew build` passes) and run
 - Project-repo lint CLI as a `lint` delivery module; decide how the rule catalogue is published (MCP tool vs static JSON).
 - Telemetry on overridden rules and zero-hit searches.
 - Prompts (e.g. `review-against-guidelines`).
+- Non-waivable rules (e.g. `waivable: false` in the rule block) for architectural constraints projects must not opt out of.
 - JSON schema for front matter (editor autocompletion).
 - CODEOWNERS per layer.
