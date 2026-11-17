@@ -1,0 +1,55 @@
+// MCP requests against a locally running server. Run them from IntelliJ IDEA's HTTP Client or VS Code's REST Client.
+// See calling-the-server.md.
+
+@host = http://localhost:8080
+
+### List the tools
+POST {{host}}/mcp
+Content-Type: application/json
+Accept: application/json, text/event-stream
+
+{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}
+
+### server_info
+POST {{host}}/mcp
+Content-Type: application/json
+Accept: application/json, text/event-stream
+
+{"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "server_info", "arguments": {}}}
+
+### get_guidelines
+POST {{host}}/mcp
+Content-Type: application/json
+Accept: application/json, text/event-stream
+
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": {
+    "name": "get_guidelines",
+    "arguments": {"team": "payments", "languages": ["java"]}
+  }
+}
+
+### list_docs, filtered by kind
+POST {{host}}/mcp
+Content-Type: application/json
+Accept: application/json, text/event-stream
+
+{"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "list_docs", "arguments": {"kind": "adr"}}}
+
+### get_doc, one section
+POST {{host}}/mcp
+Content-Type: application/json
+Accept: application/json, text/event-stream
+
+{
+  "jsonrpc": "2.0",
+  "id": 5,
+  "method": "tools/call",
+  "params": {
+    "name": "get_doc",
+    "arguments": {"id": "java-error-handling", "section": "exceptions"}
+  }
+}

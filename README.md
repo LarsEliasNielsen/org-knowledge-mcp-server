@@ -18,16 +18,14 @@ Knowledge is organized in layers. A more specific layer wins over a general one:
 org  →  language  →  team  →  project
 ```
 
-The folder a document lives in sets its layer (`org/`, `languages/java/`, `teams/payments/`). Binding guidance is
-written as rules: H3 headings with a stable id, such as `### JAVA-ERR-003 Never swallow exceptions`. A team rule can
-override a language rule, and a deprecated rule points to its successor.
+The folder a document lives in sets its layer (`org/`, `languages/java/`, `teams/payments/`). A team rule can override
+a language rule, and a deprecated rule points to its successor.
 
 The project layer lives in each project's own repo, not here. A project describes itself in a `.knowledge.yaml`
-(team, languages, frameworks) and can extend, replace or waive shared rules with its own docs. The server can't read
-the developer's workspace, so the agent passes that manifest to `get_guidelines`. The server resolves the shared
-layers and marks the rules the project overrides. The agent applies the project docs last.
+(team, languages, frameworks) and can extend, replace or waive shared rules with its own docs.
 
-See [knowledge/README.md](knowledge/README.md) for the authoring format.
+See [knowledge/README.md](knowledge/README.md) for the authoring format and
+[docs/knowledge-model.md](docs/knowledge-model.md) for how rules are resolved.
 
 ## MCP tools
 
@@ -53,29 +51,18 @@ infrastructure/   Gradle module: parsing and loading adapters
 server/           Gradle module: Ktor app and MCP tools
 examples/         A sample project repo wired to the server
 build-logic/      Shared Gradle convention plugins
-docs/plan/        Project brief and task plan
+docs/             Architecture, knowledge model and operating guides
 ```
 
-## Modules
-
-The server follows Clean Architecture with one Gradle module per ring. Dependencies point inward only, so the core
-knowledge logic has no dependency on Ktor, MCP or file formats.
-
-| Module | Responsibility | Depends on |
-|---|---|---|
-| `domain` | Entities and value objects: documents, rules, rule ids, scopes, layers, project contexts and overrides, and the `KnowledgeBase` aggregate. Pure policy such as scope matching and scope narrowing. | Kotlin stdlib only |
-| `application` | Use cases: `GetGuidelines` (the layer resolver), `ListDocs`, `GetDoc` and `ValidateKnowledgeBase` (all checks across documents). Defines the ports `KnowledgeSource` and `KnowledgeRepository`. | `domain` |
-| `infrastructure` | Adapters: the Markdown parser (commonmark-java plus kaml for front matter), the `.knowledge.yaml` manifest parser, filesystem and classpath knowledge sources, and the in-memory repository the server reads from. | `application` |
-| `server` | The Ktor application: configuration, startup loading and validation, `/health`, the MCP endpoint and tool definitions that map use-case results to MCP results. Composition root in `Application.kt`. Bundles `knowledge/` into the JAR. | all of the above |
+The modules follow Clean Architecture with dependencies pointing inward only. See
+[docs/architecture.md](docs/architecture.md).
 
 ## Getting started
 
 ### Prerequisites
 
-- JDK 21. The build uses a Gradle toolchain and finds an installed JDK 21 on its own. Gradle itself runs on any
-  JDK 17 or newer.
+- JDK 21. The build uses a Gradle toolchain and finds an installed JDK 21 on its own.
 - Git, used to stamp the build with the content version.
-- Node.js (optional), to run MCP Inspector.
 
 No Gradle installation is needed; use the wrapper.
 
@@ -109,35 +96,8 @@ The server listens on `http://localhost:8080`. Check it with:
 curl http://localhost:8080/health
 ```
 
-### Configuration
-
-Settings live in `server/src/main/resources/application.yaml`. Override them with environment variables:
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `PORT` | `8080` | HTTP port. |
-| `ALLOWED_HOSTS` | `localhost,127.0.0.1,[::1]` | Comma-separated hostnames accepted in the `Host` header of `/mcp` requests (DNS-rebinding protection). Set this to the deployed hostname. |
-| `KNOWLEDGE_DIR` | unset | Load knowledge from this directory instead of the copy bundled in the JAR. Relative paths resolve against the working directory, which is `server/` under `./gradlew :server:run`. |
-| `INCLUDE_DRAFTS` | `false` | Also serve documents with `status: draft`. For local previews only. |
-
-The server validates the knowledge base at startup and refuses to start if it is invalid.
-
-### Try the tools
-
-With the server running, open MCP Inspector and connect to `http://localhost:8080/mcp` with the Streamable HTTP
-transport:
-
-```sh
-npx @modelcontextprotocol/inspector
-```
-
-Or call a tool from the command line:
-
-```sh
-npx @modelcontextprotocol/inspector --cli http://localhost:8080/mcp --transport http \
-  --method tools/call --tool-name get_guidelines \
-  --tool-arg team=payments --tool-arg 'languages=["java"]'
-```
+To call the tools by hand with curl or an editor's HTTP client, see
+[docs/calling-the-server.md](docs/calling-the-server.md).
 
 ## Connecting Claude Code
 
@@ -162,6 +122,17 @@ The server also sends this call flow to clients as MCP instructions on connect.
 for example "Which rules apply to error handling in this project?". The build checks that the sample's manifest resolves
 against `knowledge/` without warnings.
 
+## Configuration
+
+Port, allowed hosts and the knowledge source are set by environment variables; see
+[docs/configuration.md](docs/configuration.md).
+
+## Security
+
+The server has no authentication: run it on localhost or inside an internal network only. In Claude Code's `/mcp`
+menu, use Reconnect, not Authenticate. See [docs/security.md](docs/security.md) for the details and for what to add
+before exposing it further.
+
 ## Working on knowledge
 
 1. Add or edit Markdown under `knowledge/`, following [knowledge/README.md](knowledge/README.md).
@@ -172,5 +143,9 @@ against `knowledge/` without warnings.
 
 ## Further reading
 
-- [docs/plan/brief.md](docs/plan/brief.md): the design decisions and the full knowledge model.
-- [docs/plan/TASKS.md](docs/plan/TASKS.md): the task plan and backlog.
+- [docs/architecture.md](docs/architecture.md): modules and request handling.
+- [docs/development.md](docs/development.md): build setup, libraries and tests.
+- [docs/knowledge-model.md](docs/knowledge-model.md): layers, scope, overrides, visibility and the project layer.
+- [docs/configuration.md](docs/configuration.md): settings and environment variables.
+- [docs/calling-the-server.md](docs/calling-the-server.md): calling the MCP tools with curl or an HTTP client.
+- [docs/security.md](docs/security.md): the security model and what to add before exposing the server.
